@@ -63,3 +63,7 @@ dvbcsa_bs_key_set (const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key)
     }
 }
 
+void
+dvbcsa_bs_key_set_mx (const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key, int start, int len)
+{
+}

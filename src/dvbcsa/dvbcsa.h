@@ -92,6 +92,7 @@ void dvbcsa_bs_key_free(struct dvbcsa_bs_key_s *key);
 /** setup a csa bitslice key context to use the given control word */
 
 void dvbcsa_bs_key_set(const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key);
+void dvbcsa_bs_key_set_mx (const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key, int start, int len);
 
 /** get maximum number of packet per batch */
 
