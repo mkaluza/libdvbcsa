@@ -164,6 +164,8 @@ static inline void block_sbox_avx3(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst)
 	}
 }
 
+#define BLOCK_SBOX(in_buf, out_buf) block_sbox_avx2(in_buf, out_buf);
+
 // BS_LOAD_DEINTERLEAVE_8 replacement that only loads data that are already uninterleaved
 
 #define BS_LOAD_DEINTERLEAVE_8(ptr, var_lo, var_hi) \
