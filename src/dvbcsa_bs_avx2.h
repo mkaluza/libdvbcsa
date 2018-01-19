@@ -217,5 +217,7 @@ static inline void block_sbox_permute_interleave_avx(dvbcsa_bs_word_t *src, dvbc
 	}
 }
 
+#define BLOCK_SBOX_PERMUTE(in_buf, out_buf) block_sbox_permute_interleave_avx(in_buf, out_buf);
+
 #endif
 

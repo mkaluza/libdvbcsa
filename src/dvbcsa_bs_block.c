@@ -119,9 +119,7 @@ const uint16_t dvbcsa_block_sbox_perm[256] =
 
 #else
 
-#ifdef DVBCSA_USE_AVX2 and block_sbox_permute_interleave_avx
-#define BLOCK_SBOX_PERMUTE(in_buf, out_buf) block_sbox_permute_interleave_avx(in_buf, out_buf);
-#else
+#ifndef BLOCK_SBOX_PERMUTE
 #define BLOCK_SBOX_PERMUTE(in_buf, out_buf) \
     { \
     dvbcsa_u8_aliasing_t *src = (dvbcsa_u8_aliasing_t *)in_buf; \
@@ -141,7 +139,7 @@ const uint16_t dvbcsa_block_sbox_perm[256] =
       } \
     }
 
-#endif /* DVBCSA_USE_AVX2 */
+#endif /* ifndef */
 #endif /* USE_ALT_SBOX */
 
 #else /* no BS_LOAD_DEINTERLEAVE_8 */
