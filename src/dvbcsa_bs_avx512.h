@@ -86,6 +86,7 @@ static inline void block_sbox_avx3(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst)
       var_hi = _mm512_load_si512((ptr) + 1); \
       }
 
+#ifndef DVBCSA_AVX_USE_WIDE_LUT
 #define BLOCK_SBOX_PERMUTE_LOOP_ITEM(i, sbox_out, perm_out) \
 { \
 	dvbcsa_bs_word_t a, b; \
@@ -126,7 +127,31 @@ static inline void block_sbox_avx3(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst)
 }
 
 extern const uint16_t dvbcsa_block_sbox_perm[256];
-
+#else
+#define BLOCK_SBOX_PERMUTE_LOOP_ITEM(i, sbox_out, perm_out) \
+{ \
+	dvbcsa_bs_word_t a, b; \
+	dvbcsa_bs_word_t lsw_mask = _mm512_set_epi32(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff); \
+	/* part 1 */ \
+	a = BS_AND(i, lsw_mask); \
+	sbox_out = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm_w, 4); \
+ \
+	/* part 2 */ \
+	a = _mm512_srli_epi32(i, 16); \
+	perm_out = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2); \
+ \
+	/* unpack */ \
+	/* FIXME gcc 6.3 doesn't seem to support _mm512_set_epi8 \
+	a = _mm512_shuffle_epi8(sbox_out, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0)); \
+	b = _mm512_shuffle_epi8(perm_out, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0)); \
+	*/ \
+	a = _mm512_shuffle_epi8(sbox_out, _mm512_set_epi64(0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200)); \
+	b = _mm512_shuffle_epi8(perm_out, _mm512_set_epi64(0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200)); \
+	sbox_out = _mm512_unpacklo_epi16(a, b); \
+	perm_out = _mm512_unpackhi_epi16(a, b); \
+}
+extern const uint32_t dvbcsa_block_sbox_perm_w[256*256];
+#endif
 static inline void block_sbox_permute_interleave_avx(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst) {
 	int j;
 	dvbcsa_bs_word_t i, res1, res2;
