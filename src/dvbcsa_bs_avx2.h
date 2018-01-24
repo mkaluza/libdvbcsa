@@ -174,6 +174,7 @@ static inline void block_sbox_avx3(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst)
       var_hi = _mm256_load_si256((ptr) + 1); \
       }
 
+#ifndef DVBCSA_AVX_USE_WIDE_LUT
 #define BLOCK_SBOX_PERMUTE_LOOP_ITEM(i, sbox_out, perm_out) \
 { \
 	dvbcsa_bs_word_t a, b; \
@@ -210,6 +211,27 @@ static inline void block_sbox_avx3(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst)
 }
 
 extern const uint16_t dvbcsa_block_sbox_perm[256];
+#else
+#define BLOCK_SBOX_PERMUTE_LOOP_ITEM(i, sbox_out, perm_out) \
+{ \
+	dvbcsa_bs_word_t a, b; \
+	dvbcsa_bs_word_t lsw_mask = _mm256_set_epi32(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff); \
+	/* part 1 */ \
+	a = BS_AND(i, lsw_mask); \
+	sbox_out = _mm256_i32gather_epi32((const int *)dvbcsa_block_sbox_perm_w, a, 4); \
+ \
+	/* part 2 */ \
+	a = _mm256_srli_epi32(i, 16); \
+	perm_out = _mm256_i32gather_epi32((const int *)dvbcsa_block_sbox_perm_w, a, 4); \
+ \
+	/* unpack */ \
+	a = _mm256_shuffle_epi8(sbox_out, _mm256_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0)); \
+	b = _mm256_shuffle_epi8(perm_out, _mm256_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0)); \
+	sbox_out = _mm256_unpacklo_epi16(a, b); \
+	perm_out = _mm256_unpackhi_epi16(a, b); \
+}
+extern const uint32_t dvbcsa_block_sbox_perm_w[256*256];
+#endif
 static inline void block_sbox_permute_interleave_avx(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst) {
 	int j;
 	dvbcsa_bs_word_t i, res1, res2;

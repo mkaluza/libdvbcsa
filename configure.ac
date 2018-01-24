@@ -22,6 +22,7 @@ AC_ARG_ENABLE(sse2, AC_HELP_STRING(--enable-sse2, [Use SSE2 for bitslice]), sse2
 AC_ARG_ENABLE(ssse3, AC_HELP_STRING(--enable-ssse3, [Use SSSE3 for bitslice]), ssse3_debug=$enableval, enable_ssse3=no)
 AC_ARG_ENABLE(avx2, AC_HELP_STRING(--enable-avx2, [Use AVX2 for bitslice]), avx2_debug=$enableval, enable_avx2=no)
 AC_ARG_ENABLE(avx512, AC_HELP_STRING(--enable-avx512, [Use AVX512 for bitslice]), avx512_debug=$enableval, enable_avx512=no)
+AC_ARG_ENABLE(avx-wide-lut, AC_HELP_STRING(--enable-avx_wide_lut, [Use 256x256 LUT for AVX* bitslice]), avx512_debug=$enableval, enable_avx_wide_lut=no)
 AC_ARG_ENABLE(altivec, AC_HELP_STRING(--enable-altivec, [Use AltiVec for bitslice]), altivec_debug=$enableval, enable_altivec=no)
 AC_ARG_ENABLE(neon, AC_HELP_STRING(--enable-neon, [Use NEON for bitslice]), neon_debug=$enableval, enable_neon=no)
 AC_ARG_ENABLE(alt-sbox, AC_HELP_STRING(--enable-alt-sbox, [Use alternative sbox lookup, may be faster on some targets]), alt_sbox_debug=$enableval, enable_alt_sbox=no)
@@ -97,6 +98,10 @@ else
                AC_DEFINE(DVBCSA_USE_UINT32, 1, Using 32 bits integer bitslice.)
           ;;
      esac
+fi
+
+if test "$enable_avx_wide_lut" = "yes"; then
+     AC_DEFINE(DVBCSA_AVX_USE_WIDE_LUT, 1, Using 256x256 LUT for AVX* sbox lookup.)
 fi
 
 if test "$enable_alt_sbox" = "yes"; then

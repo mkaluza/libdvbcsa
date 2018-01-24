@@ -25,6 +25,9 @@
 
 #include "dvbcsa/dvbcsa.h"
 #include "dvbcsa_bs.h"
+#ifdef DVBCSA_AVX_USE_WIDE_LUT
+#include "dvbcsa_block_sbox_perm_w.h"
+#endif
 
 #ifdef DVBCSA_USE_ALT_SBOX
 
