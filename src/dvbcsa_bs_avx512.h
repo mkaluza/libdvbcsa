@@ -86,46 +86,54 @@ static inline void block_sbox_avx3(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst)
       var_hi = _mm512_load_si512((ptr) + 1); \
       }
 
+#define BLOCK_SBOX_PERMUTE_LOOP_ITEM(i, sbox_out, perm_out) \
+{ \
+	dvbcsa_bs_word_t a, b; \
+	dvbcsa_bs_word_t lsb_mask = _mm512_set_epi32(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff); \
+	dvbcsa_bs_word_t lsw_mask = _mm512_set_epi32(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff); \
+	/* part 1 */ \
+	a = BS_AND(i, lsb_mask); \
+	b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2); \
+	sbox_out = BS_AND(b, lsw_mask); \
+ \
+	i = _mm512_srli_epi32(i, 8); \
+	a = BS_AND(i, lsb_mask); \
+	b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2); \
+	b = _mm512_slli_epi32(b, 16); \
+	sbox_out = BS_OR(sbox_out, b); \
+ \
+	/* part 2 */ \
+	i = _mm512_srli_epi32(i, 8); \
+	a = BS_AND(i, lsb_mask); \
+	b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2); \
+	perm_out = BS_AND(b, lsw_mask); \
+ \
+	i = _mm512_srli_epi32(i, 8); \
+	a = BS_AND(i, lsb_mask); \
+	b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2); \
+	b = _mm512_slli_epi32(b, 16); \
+	perm_out = BS_OR(perm_out, b); \
+ \
+	/* unpack */ \
+	/* FIXME gcc 6.3 doesn't seem to support _mm512_set_epi8 \
+	a = _mm512_shuffle_epi8(sbox_out, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0)); \
+	b = _mm512_shuffle_epi8(perm_out, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0)); \
+	*/ \
+	a = _mm512_shuffle_epi8(sbox_out, _mm512_set_epi64(0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200)); \
+	b = _mm512_shuffle_epi8(perm_out, _mm512_set_epi64(0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200)); \
+	sbox_out = _mm512_unpacklo_epi16(a, b); \
+	perm_out = _mm512_unpackhi_epi16(a, b); \
+}
+
 extern const uint16_t dvbcsa_block_sbox_perm[256];
+
 static inline void block_sbox_permute_interleave_avx(dvbcsa_bs_word_t *src, dvbcsa_bs_word_t *dst) {
 	int j;
-	dvbcsa_bs_word_t a, i, b, res1, res2;
-	dvbcsa_bs_word_t lsb_mask = _mm512_set_epi32(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff);
-	dvbcsa_bs_word_t lsw_mask = _mm512_set_epi32(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff);
+	dvbcsa_bs_word_t i, res1, res2;
 	for (j = 0; j < 8; j++) {
 		i = _mm512_load_si512(src + j);
 
-		//part 1
-		a = BS_AND(i, lsb_mask);
-		b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2);
-		res1 = BS_AND(b, lsw_mask);
-
-		i = _mm512_srli_epi32(i, 8);
-		a = BS_AND(i, lsb_mask);
-		b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2);
-		b = _mm512_slli_epi32(b, 16);
-		res1 = BS_OR(res1, b);
-
-		//part 2
-		i = _mm512_srli_epi32(i, 8);
-		a = BS_AND(i, lsb_mask);
-		b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2);
-		res2 = BS_AND(b, lsw_mask);
-
-		i = _mm512_srli_epi32(i, 8);
-		a = BS_AND(i, lsb_mask);
-		b = _mm512_i32gather_epi32(a, (const int *)dvbcsa_block_sbox_perm, 2);
-		b = _mm512_slli_epi32(b, 16);
-		res2 = BS_OR(res2, b);
-
-		//unpack
-		//a = _mm512_shuffle_epi8(res1, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0));
-		//b = _mm512_shuffle_epi8(res2, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0));
-		//FIXME gcc 6.3 doesn't seem to support _mm512_set_epi8
-		a = _mm512_shuffle_epi8(res1, _mm512_set_epi64(0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200));
-		b = _mm512_shuffle_epi8(res2, _mm512_set_epi64(0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200, 0x0f0d0b0907050301, 0x0e0c0a0806040200));
-		res1 = _mm512_unpacklo_epi16(a, b);
-		res2 = _mm512_unpackhi_epi16(a, b);
+		BLOCK_SBOX_PERMUTE_LOOP_ITEM(i, res1, res2)
 
 		_mm512_store_si512(dst + 2*j, res1);
 		_mm512_store_si512(dst + 2*j + 1, res2);
