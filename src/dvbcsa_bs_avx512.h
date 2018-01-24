@@ -119,9 +119,6 @@ static inline void block_sbox_permute_interleave_avx(dvbcsa_bs_word_t *src, dvbc
 		res2 = BS_OR(res2, b);
 
 		//unpack
-		a = _mm512_unpacklo_epi32(res1, res2);
-		b = _mm512_unpackhi_epi32(res1, res2);
-
 		//a = _mm512_shuffle_epi8(res1, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0));
 		//b = _mm512_shuffle_epi8(res2, _mm512_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0));
 		//FIXME gcc 6.3 doesn't seem to support _mm512_set_epi8
