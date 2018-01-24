@@ -89,7 +89,7 @@ main (void)
 
   gettimeofday(&t1, NULL);
 
-  printf(" - %u packets proceded, %.1f Mbits/s\n\n", c,
+  printf(" - %llu packets proceded (decrypted), %.1f Mbits/s\n\n", c,
          (float)(c * 184 * 8) / (float)((t1.tv_sec * 1000000 + t1.tv_usec) - (t0.tv_sec * 1000000 + t0.tv_usec))
          );
 
@@ -113,7 +113,7 @@ main (void)
 
   gettimeofday(&t1, NULL);
 
-  printf(" - %u packets proceded, %.1f Mbits/s\n", c,
+  printf(" - %llu packets proceded (encrypted), %.1f Mbits/s\n", c,
          (float)(c * 184 * 8) / (float)((t1.tv_sec * 1000000 + t1.tv_usec) - (t0.tv_sec * 1000000 + t0.tv_usec))
          );
 
