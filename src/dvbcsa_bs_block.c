@@ -214,12 +214,7 @@ const uint16_t dvbcsa_block_sbox_perm[256] =
 DVBCSA_INLINE static inline void
 dvbcsa_bs_block_decrypt_register (const dvbcsa_bs_word_t *block, dvbcsa_bs_word_t *r)
 {
-  dvbcsa_bs_word_t scratch1[8];
-#ifdef BS_LOAD_DEINTERLEAVE_8
-  dvbcsa_bs_word_t scratch2[8 * 2];
-#else
-  dvbcsa_bs_word_t scratch2[8];
-#endif
+  dvbcsa_bs_word_t scratch1;
   int i, g;
 
   r += 8 * 56;
@@ -231,27 +226,13 @@ dvbcsa_bs_block_decrypt_register (const dvbcsa_bs_word_t *block, dvbcsa_bs_word_
 
       r -= 8;   /* virtual shift of registers */
 
-      for (g = 0; g < 8; g++)
-        scratch1[g] = BS_XOR(block[i], r6_N[g]);
-
-#ifdef BS_LOAD_DEINTERLEAVE_8
-      /* sbox + bit permutation */
-      BLOCK_SBOX_PERMUTE(scratch1, scratch2);
-#else
-      /* only sbox */
-      BLOCK_SBOX(scratch1, scratch2);
-#endif
-
-      for (g = 0; g < 8; g++)
-        {
+      for (g = 0; g < 8; g++) {
           dvbcsa_bs_word_t sbox_out, perm_out, w, tmp1, tmp2, tmp3, tmp4;
 
-#ifdef BS_LOAD_DEINTERLEAVE_8
-          BS_LOAD_DEINTERLEAVE_8(scratch2 + g * 2, sbox_out, perm_out);
-#else
-          sbox_out = scratch2[g];
-          BLOCK_PERMUTE_LOGIC(sbox_out, perm_out);
-#endif
+          scratch1 = BS_XOR(block[i], r6_N[g]);
+
+          BLOCK_SBOX_PERMUTE_LOOP_ITEM(scratch1, sbox_out, perm_out);
+
           /*
               w = r[8 * 8 + g] ^ sbox_out;
               r[8 * 0 + g] = w;
@@ -305,12 +286,7 @@ void dvbcsa_bs_block_decrypt_batch(const struct dvbcsa_bs_key_s *key,
 DVBCSA_INLINE static inline void
 dvbcsa_bs_block_encrypt_register (const dvbcsa_bs_word_t *block, dvbcsa_bs_word_t *r)
 {
-  dvbcsa_bs_word_t scratch1[8];
-#ifdef BS_LOAD_DEINTERLEAVE_8
-  dvbcsa_bs_word_t scratch2[8 * 2];
-#else
-  dvbcsa_bs_word_t scratch2[8];
-#endif
+  dvbcsa_bs_word_t scratch1;
   int i, g;
 
   /* loop over kk[55]..kk[0] */
@@ -320,27 +296,13 @@ dvbcsa_bs_block_encrypt_register (const dvbcsa_bs_word_t *block, dvbcsa_bs_word_
 
       r += 8;   /* virtual shift of registers */
 
-      for (g = 0; g < 8; g++)
-         scratch1[g] = BS_XOR(block[i], r7_N[g]);
-
-#ifdef BS_LOAD_DEINTERLEAVE_8
-      /* sbox + bit permutation */
-      BLOCK_SBOX_PERMUTE(scratch1, scratch2);
-#else
-      /* only sbox */
-      BLOCK_SBOX(scratch1, scratch2);
-#endif
-
-      for (g = 0; g < 8; g++)
-        {
+      for (g = 0; g < 8; g++) {
           dvbcsa_bs_word_t sbox_out, perm_out, w, tmp1, tmp2, tmp3, tmp4;
 
-#ifdef BS_LOAD_DEINTERLEAVE_8
-          BS_LOAD_DEINTERLEAVE_8(scratch2 + g * 2, sbox_out, perm_out);
-#else
-          sbox_out = scratch2[g];
-          BLOCK_PERMUTE_LOGIC(sbox_out, perm_out);
-#endif
+          scratch1 = BS_XOR(block[i], r7_N[g]);
+
+          BLOCK_SBOX_PERMUTE_LOOP_ITEM(scratch1, sbox_out, perm_out);
+
           /*
               w = r[-8 * 1 + g];
               r[8 * 7 + g] = w ^ sbox_out;
