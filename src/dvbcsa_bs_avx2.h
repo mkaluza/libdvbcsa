@@ -207,9 +207,6 @@ static inline void block_sbox_permute_interleave_avx(dvbcsa_bs_word_t *src, dvbc
 		res2 = BS_OR(res2, b);
 
 		//unpack
-		a = _mm256_unpacklo_epi32(res1, res2);
-		b = _mm256_unpackhi_epi32(res1, res2);
-
 		a = _mm256_shuffle_epi8(res1, _mm256_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0));
 		b = _mm256_shuffle_epi8(res2, _mm256_set_epi8(15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0, 15,13,11,9,7,5,3,1, 14,12,10,8,6,4,2,0));
 		res1 = _mm256_unpacklo_epi16(a, b);
