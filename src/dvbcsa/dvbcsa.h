@@ -122,9 +122,10 @@ void dvbcsa_bs_encrypt(const struct dvbcsa_bs_key_s *key,
 struct dvbcsa_bs_mx_stream_s
 {
   dvbcsa_cw_t cw;                 /* key to be passed to dvbcsa_bs_key_set_mx */
-  unsigned int first_slot;        /* first slot allocated for the stream */
-  unsigned int n_slots;           /* number of slots allocated for the stream */
+  unsigned short int first_slot;        /* first slot allocated for the stream */
+  unsigned short int n_slots;           /* number of slots allocated for the stream */
   struct dvbcsa_bs_batch_s *pcks; /* stream's batch with extra NULL data */
+  unsigned char even_odd;      /* whether cw is even (0) or odd (1) */
 };
 
 /** setup a part of the bitslice key context for a particular stream */
